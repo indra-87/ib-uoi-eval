@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IB UOI 학생 평가 시스템</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        @media (min-width: 768px) {
+            body {
+                padding: 20px;
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        @media (min-width: 768px) {
+            .header {
+                padding: 30px;
+            }
+        }
+
+        .header h1 {
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+
+        @media (min-width: 768px) {
+            .header h1 {
+                font-size: 28px;
+                margin-bottom: 10px;
+            }
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 12px;
+        }
+
+        @media (min-width: 768px) {
+            .header p {
+                font-size: 14px;
+            }
+        }
+
+        .content {
+            padding: 15px;
+        }
+
+        @media (min-width: 768px) {
+            .content {
+                padding: 30px;
+            }
+        }
+
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+        }
+
+        @media (min-width: 768px) {
+            .section {
+                margin-bottom: 30px;
+                padding: 25px;
+            }
+        }
+
+        .section-title {
+            font-size: 18px;
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @media (min-width: 768px) {
+            .section-title {
+                font-size: 20px;
+                margin-bottom: 20px;
+            }
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: #667eea;
+            border-radius: 2px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        @media (min-width: 768px) {
+            .radio-group {
+                flex-direction: row;
+                gap: 20px;
+            }
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .file-upload-area {
+            border: 3px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 30px 15px;
+            text-align: center;
+            background: white;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        @media (min-width: 768px) {
+            .file-upload-area {
+                padding: 40px;
+            }
+        }
+
+        .file-upload-area:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 20px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            gap: 10px;
+        }
+
+        .file-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            flex: 1;
+            min-width: 0;
+            word-break: break-all;
+        }
+
+        @media (min-width: 768px) {
+            .file-name {
+                font-size: 14px;
+            }
+        }
+
+        .remove-file {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .remove-file:hover {
+            background: #c82333;
+        }
+
+        .btn {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .btn {
+                padding: 14px 30px;
+                font-size: 16px;
+                width: auto;
+            }
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .button-group {
+                flex-direction: row;
+                gap: 15px;
+            }
+        }
+
+        .results {
+            margin-top: 30px;
+        }
+
+        .result-item {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #e9ecef;
+        }
+
+        .result-item.error {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .result-header {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        @media (min-width: 768px) {
+            .result-header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        .result-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #495057;
+            word-break: break-all;
+        }
+
+        @media (min-width: 768px) {
+            .result-title {
+                font-size: 18px;
+            }
+        }
+
+        .result-score {
+            font-size: 22px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        @media (min-width: 768px) {
+            .result-score {
+                font-size: 24px;
+            }
+        }
+
+        .result-content {
+            line-height: 1.8;
+            color: #495057;
+            white-space: pre-wrap;
+            font-size: 14px;
+        }
+
+        @media (min-width: 768px) {
+            .result-content {
+                font-size: 15px;
+            }
+        }
+
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 IB UOI 학생 평가 시스템</h1>
+            <p>손글씨 인식 및 AI 기반 자동 평가 도구</p>
+        </div>
+
+        <div class="content">
+            <div class="alert alert-warning">
+                <strong>⚠️ 현재 직접 파일 모드입니다</strong><br>
+                Google Apps Script 배포 없이 바로 사용할 수 있습니다.<br>
+                단, API 키가 노출되므로 개인적인 용도로만 사용하세요.
+            </div>
+
+            <!-- API 키 입력 -->
+            <div class="section">
+                <div class="section-title">🔑 API 키 설정</div>
+                <label for="apiKeyInput">Google Gemini API 키</label>
+                <input type="text" id="apiKeyInput" placeholder="AIzaSy..." value="AIzaSyA1v8IuWpiq-Vdp9sB_f6rdgIey5pPrw2A">
+                <p style="font-size: 12px; color: #6c757d; margin-top: 5px;">
+                    API 키는 브라우저에만 저장되며 서버로 전송되지 않습니다
+                </p>
+            </div>
+
+            <!-- 평가 설정 섹션 -->
+            <div class="section">
+                <div class="section-title">⚙️ 평가 설정</div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label>평가 방법 선택</label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="evalType" value="score" checked>
+                            <span>점수 평가 (0-100점)</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="evalType" value="level">
+                            <span>수준 평가 (상-중-하)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label>
+                        <input type="checkbox" id="useRubric" style="width: auto; margin-right: 8px;">
+                        루브릭 사용하기
+                    </label>
+                </div>
+
+                <div id="rubricSection" style="display: none;">
+                    <label for="rubricInput">IB 평가 루브릭</label>
+                    <textarea id="rubricInput" placeholder="평가 루브릭을 입력하세요.&#10;&#10;예시:&#10;- 개념 이해 (30점): 핵심 개념을 정확히 이해하고 설명함&#10;- 탐구 능력 (30점): 질문하고 조사하는 능력을 보여줌&#10;- 의사소통 (20점): 생각을 명확하게 표현함&#10;- 성찰 (20점): 배운 내용을 되돌아보고 적용함"></textarea>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <label for="additionalInstructions">추가 평가 지침 (선택사항)</label>
+                    <textarea id="additionalInstructions" placeholder="평가 시 특별히 고려할 사항이나 추가 지침을 입력하세요."></textarea>
+                </div>
+            </div>
+
+            <!-- 파일 업로드 섹션 -->
+            <div class="section">
+                <div class="section-title">📁 학생 답안 업로드</div>
+                
+                <div class="alert alert-info">
+                    💡 PDF 파일 또는 이미지 파일(JPG, PNG)을 업로드하세요. 최대 30개 파일까지 한 번에 업로드 가능합니다.
+                </div>
+
+                <div class="file-upload-area" id="uploadArea">
+                    <div class="upload-icon">📤</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">
+                        파일을 여기에 끌어다 놓거나 클릭하여 선택하세요
+                    </div>
+                    <div style="color: #6c757d; font-size: 14px;">
+                        PDF, JPG, PNG 파일 지원 (최대 30개)<br>
+                        📱 모바일: 카메라 촬영도 가능합니다
+                    </div>
+                    <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png,image/*" capture="environment">
+                </div>
+
+                <div id="fileList" class="file-list"></div>
+
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill">0%</div>
+                    </div>
+                    <div style="text-align: center; margin-top: 10px; color: #6c757d;" id="progressText"></div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" id="evaluateBtn" disabled>
+                        🚀 평가 시작
+                    </button>
+                    <button class="btn btn-secondary" id="clearBtn">
+                        🗑️ 초기화
+                    </button>
+                </div>
+            </div>
+
+            <!-- 평가 결과 섹션 -->
+            <div id="resultsSection" class="results" style="display: none;">
+                <div class="section">
+                    <div class="section-title">📊 평가 결과</div>
+                    <div class="button-group" style="margin-bottom: 20px;">
+                        <button class="btn btn-primary" id="downloadBtn">
+                            💾 결과 다운로드 (CSV)
+                        </button>
+                    </div>
+                    <div id="resultsContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedFiles = [];
+        let evaluationResults = [];
+
+        // DOM 요소
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const useRubricCheckbox = document.getElementById('useRubric');
+        const rubricSection = document.getElementById('rubricSection');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const evaluateBtn = document.getElementById('evaluateBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const resultsSection = document.getElementById('resultsSection');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // 루브릭 사용 토글
+        useRubricCheckbox.addEventListener('change', (e) => {
+            rubricSection.style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        // 파일 업로드 영역 클릭
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // 드래그 앤 드롭
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // 파일 선택
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        // 파일 처리
+        function handleFiles(files) {
+            const fileArray = Array.from(files);
+            
+            if (uploadedFiles.length + fileArray.length > 30) {
+                alert('최대 30개 파일까지만 업로드할 수 있습니다.');
+                return;
+            }
+
+            fileArray.forEach(file => {
+                if (file.type === 'application/pdf' || 
+                    file.type === 'image/jpeg' || 
+                    file.type === 'image/png' ||
+                    file.type.startsWith('image/')) {
+                    uploadedFiles.push(file);
+                } else {
+                    alert(`${file.name}은(는) 지원하지 않는 파일 형식입니다.`);
+                }
+            });
+
+            updateFileList();
+            evaluateBtn.disabled = uploadedFiles.length === 0;
+        }
+
+        // 파일 목록 업데이트
+        function updateFileList() {
+            fileList.innerHTML = '';
+            
+            uploadedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <div class="file-name">
+                        <span>${file.type === 'application/pdf' ? '📄' : '🖼️'}</span>
+                        <span>${file.name}</span>
+                        <span style="color: #6c757d; font-size: 12px;">(${(file.size / 1024).toFixed(1)} KB)</span>
+                    </div>
+                    <button class="remove-file" onclick="removeFile(${index})">삭제</button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        // 파일 삭제
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            updateFileList();
+            evaluateBtn.disabled = uploadedFiles.length === 0;
+        }
+
+        // 초기화
+        clearBtn.addEventListener('click', () => {
+            uploadedFiles = [];
+            evaluationResults = [];
+            fileList.innerHTML = '';
+            resultsSection.style.display = 'none';
+            progressContainer.style.display = 'none';
+            evaluateBtn.disabled = true;
+            fileInput.value = '';
+        });
+
+        // 파일을 Base64로 변환
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Gemini API 호출
+        async function callGeminiAPI(imageData, prompt, mimeType) {
+            const API_KEY = apiKeyInput.value.trim();
+            
+            if (!API_KEY) {
+                throw new Error('API 키를 입력해주세요');
+            }
+
+            const models = [
+                'gemini-2.5-flash',
+                'gemini-2.0-flash',
+                'gemini-flash-latest'
+            ];
+
+            for (const model of models) {
+                try {
+                    const response = await fetch(
+                        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                contents: [{
+                                    parts: [
+                                        { text: prompt },
+                                        {
+                                            inlineData: {
+                                                mimeType: mimeType,
+                                                data: imageData
+                                            }
+                                        }
+                                    ]
+                                }]
+                            })
+                        }
+                    );
+
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            continue; // 다음 모델 시도
+                        }
+                        const errorData = await response.json();
+                        throw new Error(errorData.error?.message || `API 오류: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    return data.candidates[0].content.parts[0].text;
+
+                } catch (error) {
+                    if (models.indexOf(model) === models.length - 1) {
+                        throw error;
+                    }
+                    continue;
+                }
+            }
+
+            throw new Error('모든 모델 시도 실패');
+        }
+
+        // 평가 프롬프트 생성
+        function generateEvaluationPrompt() {
+            const evalType = document.querySelector('input[name="evalType"]:checked').value;
+            const useRubric = useRubricCheckbox.checked;
+            const rubric = document.getElementById('rubricInput').value;
+            const additional = document.getElementById('additionalInstructions').value;
+
+            let prompt = `당신은 IB UOI(Unit of Inquiry) 수업을 담당하는 초등학교 교사입니다.
+학생이 손으로 작성한 답안을 평가해주세요.
+
+`;
+
+            if (evalType === 'score') {
+                prompt += `평가 방법: 0-100점 척도로 점수를 부여하세요.\n\n`;
+            } else {
+                prompt += `평가 방법: 상/중/하 3단계로 평가하세요.\n\n`;
+            }
+
+            if (useRubric && rubric) {
+                prompt += `평가 루브릭:\n${rubric}\n\n`;
+            }
+
+            if (additional) {
+                prompt += `추가 평가 지침:\n${additional}\n\n`;
+            }
+
+            prompt += `다음 형식으로 평가 결과를 작성해주세요:
+
+1. 작성된 내용 요약
+2. 평가 결과: ${evalType === 'score' ? '[점수]/100점' : '[상/중/하]'}
+3. 강점
+4. 개선이 필요한 부분
+5. 구체적인 피드백
+
+답안을 읽고 정확하게 평가해주세요.`;
+
+            return prompt;
+        }
+
+        // 평가 시작
+        evaluateBtn.addEventListener('click', async () => {
+            if (uploadedFiles.length === 0) {
+                alert('평가할 파일을 업로드해주세요.');
+                return;
+            }
+
+            if (!apiKeyInput.value.trim()) {
+                alert('API 키를 입력해주세요.');
+                apiKeyInput.focus();
+                return;
+            }
+
+            evaluateBtn.disabled = true;
+            progressContainer.style.display = 'block';
+            resultsSection.style.display = 'none';
+            evaluationResults = [];
+
+            const prompt = generateEvaluationPrompt();
+            let completed = 0;
+
+            try {
+                for (const file of uploadedFiles) {
+                    progressText.textContent = `${file.name} 처리 중...`;
+                    
+                    try {
+                        const imageData = await fileToBase64(file);
+                        const result = await callGeminiAPI(imageData, prompt, file.type);
+                        
+                        evaluationResults.push({
+                            fileName: file.name,
+                            evaluation: result,
+                            success: true
+                        });
+                    } catch (error) {
+                        evaluationResults.push({
+                            fileName: file.name,
+                            evaluation: `평가 실패: ${error.message}`,
+                            success: false
+                        });
+                    }
+
+                    completed++;
+                    const percentage = Math.round((completed / uploadedFiles.length) * 100);
+                    progressFill.style.width = percentage + '%';
+                    progressFill.textContent = percentage + '%';
+
+                    // API 제한 고려 짧은 딜레이
+                    if (completed < uploadedFiles.length) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                }
+
+                displayResults();
+                resultsSection.style.display = 'block';
+                progressText.textContent = '평가 완료!';
+                
+            } catch (error) {
+                alert('평가 중 오류가 발생했습니다: ' + error.message);
+                console.error(error);
+            } finally {
+                evaluateBtn.disabled = false;
+            }
+        });
+
+        // 결과 표시
+        function displayResults() {
+            resultsContainer.innerHTML = '';
+            
+            evaluationResults.forEach((result, index) => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item' + (result.success ? '' : ' error');
+                
+                let score = '';
+                if (result.success) {
+                    const scoreMatch = result.evaluation.match(/(\d+)\/100점|평가 결과:\s*(상|중|하)/);
+                    score = scoreMatch ? scoreMatch[1] || scoreMatch[2] : '';
+                }
+                
+                resultItem.innerHTML = `
+                    <div class="result-header">
+                        <div class="result-title">${result.success ? '📝' : '❌'} ${result.fileName}</div>
+                        ${score ? `<div class="result-score">${score}</div>` : ''}
+                    </div>
+                    <div class="result-content">${result.evaluation}</div>
+                `;
+                
+                resultsContainer.appendChild(resultItem);
+            });
+        }
+
+        // 결과 다운로드
+        downloadBtn.addEventListener('click', () => {
+            let csvContent = '\uFEFF';
+            csvContent += '파일명,평가결과,성공여부\n';
+            
+            evaluationResults.forEach(result => {
+                const evaluation = result.evaluation.replace(/"/g, '""').replace(/\n/g, ' ');
+                csvContent += `"${result.fileName}","${evaluation}","${result.success ? '성공' : '실패'}"\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'IB_UOI_평가결과_' + new Date().toISOString().slice(0,10) + '.csv');
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // API 키 로컬 저장
+        apiKeyInput.addEventListener('change', () => {
+            localStorage.setItem('gemini_api_key', apiKeyInput.value);
+        });
+
+        // API 키 불러오기
+        window.addEventListener('load', () => {
+            const savedKey = localStorage.getItem('gemini_api_key');
+            if (savedKey) {
+                apiKeyInput.value = savedKey;
+            }
+        });
+    </script>
+</body>
+</html>
