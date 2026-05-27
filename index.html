@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IB UOI 학생 평가 시스템</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Gowun+Dodum&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --indigo:   #4F46E5;
+      --indigo-d: #3730A3;
+      --indigo-l: #EEF2FF;
+      --violet:   #7C3AED;
+      --teal:     #0D9488;
+      --rose:     #E11D48;
+      --amber:    #D97706;
+      --green:    #16A34A;
+      --gray-50:  #F9FAFB;
+      --gray-100: #F3F4F6;
+      --gray-200: #E5E7EB;
+      --gray-300: #D1D5DB;
+      --gray-400: #9CA3AF;
+      --gray-600: #4B5563;
+      --gray-800: #1F2937;
+      --white:    #FFFFFF;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+      --radius:    12px;
+      --radius-sm: 8px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans KR', sans-serif; background: #ECEFF8; min-height: 100vh; color: var(--gray-800); }
+
+    /* TOP BAR */
+    .topbar {
+      background: linear-gradient(135deg, var(--indigo) 0%, var(--violet) 100%);
+      color: var(--white); padding: 0 24px; height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(79,70,229,.35); position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-brand { display: flex; align-items: center; gap: 10px; font-family: 'Gowun Dodum', sans-serif; font-size: 18px; font-weight: 700; }
+    .topbar-brand span { font-size: 22px; }
+    .topbar-right { display: flex; gap: 12px; align-items: center; }
+    .db-status { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gray-400); }
+    .dot.ok { background: #22C55E; }
+    .dot.err { background: var(--rose); }
+    .badge-count { background: rgba(255,255,255,.22); border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 600; }
+
+    /* LAYOUT */
+    .main { max-width: 980px; margin: 0 auto; padding: 28px 20px 60px; display: flex; flex-direction: column; gap: 20px; }
+
+    /* CARD */
+    .card { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200); overflow: hidden; }
+    .card-header { padding: 18px 22px 14px; border-bottom: 1px solid var(--gray-100); display: flex; align-items: center; gap: 10px; }
+    .card-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--indigo-l); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .card-title { font-size: 15px; font-weight: 700; color: var(--gray-800); }
+    .card-body { padding: 20px 22px; }
+
+    /* FORM */
+    label { display: block; font-size: 13px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px; }
+    textarea, input[type="text"], select {
+      width: 100%; padding: 10px 13px; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm);
+      font-size: 14px; font-family: inherit; color: var(--gray-800); background: var(--gray-50);
+      transition: border-color .2s, box-shadow .2s; outline: none;
+    }
+    textarea:focus, input[type="text"]:focus, select:focus {
+      border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,.12); background: var(--white);
+    }
+    textarea { resize: vertical; }
+
+    /* RADIO TABS */
+    .radio-tabs { display: flex; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); overflow: hidden; }
+    .radio-tabs label { flex: 1; text-align: center; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--gray-600); background: var(--white); border: none; margin: 0; transition: background .15s, color .15s; }
+    .radio-tabs input[type="radio"] { display: none; }
+    .radio-tabs input[type="radio"]:checked + label { background: var(--indigo); color: var(--white); }
+
+    /* TOGGLE */
+    .toggle-row { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+    .toggle { width: 40px; height: 22px; background: var(--gray-200); border-radius: 11px; position: relative; transition: background .2s; flex-shrink: 0; }
+    .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: var(--white); border-radius: 50%; box-shadow: var(--shadow-sm); transition: transform .2s; }
+    .toggle.on { background: var(--indigo); }
+    .toggle.on::after { transform: translateX(18px); }
+    .toggle-label { font-size: 13px; font-weight: 600; color: var(--gray-600); margin: 0; }
+
+    /* SETTINGS GRID */
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    @media (max-width: 600px) { .settings-grid { grid-template-columns: 1fr; } }
+
+    /* ── RUBRIC PANEL ── */
+    .rubric-panel {
+      margin-top: 18px;
+      border: 1.5px solid #C7D2FE;
+      border-radius: var(--radius);
+      background: #F5F7FF;
+      overflow: hidden;
+    }
+    .rubric-panel-header {
+      background: var(--indigo-l);
+      padding: 12px 18px;
+      border-bottom: 1.5px solid #C7D2FE;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--indigo-d);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .rubric-panel-body { padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+
+    /* 성취기준 입력 */
+    .achievement-box { display: flex; flex-direction: column; gap: 6px; }
+    .achievement-box label { font-size: 13px; font-weight: 700; color: var(--indigo-d); }
+    .achievement-box textarea { min-height: 70px; background: var(--white); border-color: #C7D2FE; }
+    .achievement-box textarea:focus { border-color: var(--indigo); }
+
+    /* 평가 단계 테이블 */
+    .levels-section { display: flex; flex-direction: column; gap: 10px; }
+    .levels-section-title {
+      font-size: 13px; font-weight: 700; color: var(--indigo-d);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .levels-section-title .level-btns { display: flex; gap: 6px; }
+
+    .level-row {
+      display: grid;
+      grid-template-columns: 110px 1fr 32px;
+      gap: 10px;
+      align-items: start;
+      background: var(--white);
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      transition: border-color .2s;
+    }
+    .level-row:hover { border-color: #A5B4FC; }
+    .level-row:first-child { border-color: #86EFAC; background: #F0FDF4; }
+    .level-row:last-child  { border-color: #FCA5A5; background: #FFF1F2; }
+
+    .level-name-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .level-name-wrap label { font-size: 11px; color: var(--gray-400); margin: 0; }
+    .level-name-input {
+      width: 100%; padding: 7px 10px; border: 1.5px solid var(--gray-200);
+      border-radius: 6px; font-size: 14px; font-weight: 700;
+      font-family: inherit; text-align: center; background: var(--gray-50);
+      outline: none; transition: border-color .2s;
+      color: var(--gray-800);
+    }
+    .level-name-input:focus { border-color: var(--indigo); background: var(--white); }
+
+    .level-desc-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .level-desc-wrap label { font-size: 11px; color: var(--gray-400); margin: 0; }
+    .level-desc-input {
+      width: 100%; padding: 7px 10px; border: 1.5px solid var(--gray-200);
+      border-radius: 6px; font-size: 13px; font-family: inherit;
+      resize: vertical; min-height: 64px; background: var(--gray-50);
+      outline: none; transition: border-color .2s; color: var(--gray-800);
+    }
+    .level-desc-input:focus { border-color: var(--indigo); background: var(--white); }
+
+    .level-delete-btn {
+      width: 28px; height: 28px; border-radius: 6px;
+      border: 1px solid var(--gray-200); background: var(--white);
+      color: var(--rose); font-size: 15px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s; flex-shrink: 0; margin-top: 18px;
+    }
+    .level-delete-btn:hover { background: #FFF1F2; border-color: #FECDD3; }
+    .level-delete-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+    /* UPLOAD ZONE */
+    .upload-zone { border: 2px dashed var(--gray-200); border-radius: var(--radius); padding: 36px 20px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; background: var(--gray-50); }
+    .upload-zone:hover, .upload-zone.dragover { border-color: var(--indigo); background: var(--indigo-l); }
+    .upload-zone-icon { font-size: 40px; margin-bottom: 12px; }
+    .upload-zone-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .upload-zone-sub { font-size: 13px; color: var(--gray-400); }
+    #fileInput { display: none; }
+
+    /* FILE LIST */
+    .file-list { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .file-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 13px; }
+    .file-item-info { display: flex; align-items: center; gap: 10px; }
+    .file-item-size { color: var(--gray-400); font-size: 12px; }
+    .btn-remove { background: none; border: 1px solid var(--gray-200); border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer; color: var(--rose); font-weight: 600; transition: background .15s; }
+    .btn-remove:hover { background: #FFF1F2; }
+
+    /* BUTTONS */
+    .btn { display: inline-flex; align-items: center; gap: 7px; padding: 11px 22px; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; transition: opacity .15s, transform .15s; }
+    .btn:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-primary { background: linear-gradient(135deg, var(--indigo), var(--violet)); color: var(--white); box-shadow: 0 4px 14px rgba(79,70,229,.3); }
+    .btn-outline { background: var(--white); border: 1.5px solid var(--gray-200); color: var(--gray-600); }
+    .btn-teal { background: var(--teal); color: var(--white); }
+    .btn-green { background: var(--green); color: var(--white); }
+    .btn-sm { padding: 6px 13px; font-size: 12px; font-weight: 700; border-radius: 6px; }
+    .btn-icon { padding: 6px 10px; font-size: 13px; }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+
+    /* PROGRESS */
+    .progress-wrap { margin-top: 16px; }
+    .progress-track { width: 100%; height: 10px; background: var(--gray-100); border-radius: 10px; overflow: hidden; }
+    .progress-bar { height: 100%; background: linear-gradient(90deg, var(--indigo), var(--violet)); border-radius: 10px; transition: width .4s; }
+    .progress-text { font-size: 12px; color: var(--gray-400); margin-top: 7px; text-align: center; }
+
+    /* ALERT */
+    .alert { border-radius: var(--radius-sm); padding: 12px 15px; font-size: 13px; display: flex; align-items: flex-start; gap: 9px; margin-bottom: 14px; }
+    .alert-info  { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
+    .alert-error { background: #FFF1F2; color: #9F1239; border: 1px solid #FECDD3; }
+
+    /* RESULT */
+    .result-item { border: 1.5px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
+    .result-item.error-item { border-color: #FECDD3; }
+    .result-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--gray-50); border-bottom: 1px solid var(--gray-200); }
+    .result-filename { font-size: 14px; font-weight: 700; color: var(--gray-800); display: flex; align-items: center; gap: 8px; }
+    .score-badge { background: linear-gradient(135deg, var(--indigo), var(--violet)); color: var(--white); border-radius: 20px; padding: 4px 14px; font-size: 14px; font-weight: 700; }
+    .level-badge { padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; color: var(--white); background: var(--indigo); }
+    .result-body { padding: 18px; font-size: 13.5px; line-height: 1.85; white-space: pre-wrap; color: var(--gray-600); }
+
+    /* TAB */
+    .tab-nav { display: flex; gap: 4px; border-bottom: 2px solid var(--gray-100); margin-bottom: 20px; }
+    .tab-btn { padding: 9px 16px; font-size: 13px; font-weight: 600; border: none; background: none; cursor: pointer; color: var(--gray-400); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color .15s; font-family: inherit; }
+    .tab-btn.active { color: var(--indigo); border-bottom-color: var(--indigo); }
+
+    /* SAVED TABLE */
+    .results-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .results-table th { background: var(--gray-50); padding: 10px 14px; text-align: left; font-weight: 700; color: var(--gray-600); border-bottom: 1.5px solid var(--gray-200); }
+    .results-table td { padding: 10px 14px; border-bottom: 1px solid var(--gray-100); color: var(--gray-800); vertical-align: top; }
+    .results-table tr:last-child td { border-bottom: none; }
+    .results-table tr:hover td { background: var(--gray-50); }
+
+    /* COLLAPSIBLE */
+    .collapsible { display: none; }
+    .collapsible.open { display: block; }
+
+    /* EMPTY */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--gray-400); }
+    .empty-state-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-state-text { font-size: 14px; }
+
+    /* SPINNER */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,.4); border-top-color: white; border-radius: 50%; animation: spin .7s linear infinite; }
+
+    /* TOAST */
+    #toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--gray-800); color: var(--white); padding: 12px 22px; border-radius: 30px; font-size: 13px; font-weight: 600; box-shadow: 0 10px 40px rgba(0,0,0,.15); transition: transform .3s, opacity .3s; opacity: 0; pointer-events: none; z-index: 999; white-space: nowrap; }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="topbar-brand"><span>🎓</span> IB UOI 학생 평가 시스템</div>
+  <div class="topbar-right">
+    <div class="db-status">
+      <div class="dot" id="dbDot"></div>
+      <span id="dbStatusText">연결 중…</span>
+    </div>
+    <span class="badge-count" id="fileCountBadge">파일 0개</span>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- ── 평가 설정 ── -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">📋</div>
+      <div class="card-title">평가 설정</div>
+    </div>
+    <div class="card-body">
+
+      <div class="settings-grid">
+        <div>
+          <label>평가 방법</label>
+          <div class="radio-tabs">
+            <input type="radio" name="evalType" id="et-score" value="score" checked />
+            <label for="et-score">점수 (0–100)</label>
+            <input type="radio" name="evalType" id="et-level" value="level" />
+            <label for="et-level">수준 (단계별)</label>
+          </div>
+        </div>
+        <div>
+          <label>루브릭 사용</label>
+          <div class="toggle-row" id="rubricToggleRow">
+            <div class="toggle" id="rubricToggle"></div>
+            <span class="toggle-label" id="rubricToggleLabel">루브릭 사용 안 함</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 루브릭 패널 ── -->
+      <div class="rubric-panel collapsible" id="rubricPanel">
+        <div class="rubric-panel-header">📐 루브릭 상세 설정</div>
+        <div class="rubric-panel-body">
+
+          <!-- 성취 기준 -->
+          <div class="achievement-box">
+            <label>📌 성취 수준 / 성취 기준</label>
+            <textarea id="achievementInput" rows="3"
+              placeholder="예: 학생은 탐구 주제와 관련된 핵심 개념을 이해하고, 자신의 생각을 글과 그림으로 표현할 수 있다."></textarea>
+          </div>
+
+          <!-- 평가 단계 -->
+          <div class="levels-section">
+            <div class="levels-section-title">
+              <span>📊 평가 단계 및 기준</span>
+              <div class="level-btns">
+                <button class="btn btn-outline btn-sm btn-icon" onclick="addLevel()" title="단계 추가">＋ 단계 추가</button>
+              </div>
+            </div>
+            <div id="levelsContainer"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 추가 지침 -->
+      <div style="margin-top:16px">
+        <label>추가 평가 지침 <span style="font-weight:400;color:var(--gray-400)">(선택)</span></label>
+        <textarea id="additionalInstr" rows="2"
+          placeholder="평가 시 특별히 고려할 사항을 입력하세요."></textarea>
+      </div>
+
+      <!-- 반/학생 정보 -->
+      <div style="margin-top:16px">
+        <label>반 / 학생 정보 <span style="font-weight:400;color:var(--gray-400)">(선택)</span></label>
+        <input type="text" id="classInfo" placeholder="예: 3학년 2반" />
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 파일 업로드 ── -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">📁</div>
+      <div class="card-title">학생 답안 업로드</div>
+    </div>
+    <div class="card-body">
+      <div class="alert alert-info">💡 PDF 또는 이미지(JPG, PNG) 파일을 업로드하세요. 최대 30개까지 한 번에 평가 가능합니다.</div>
+
+      <div class="upload-zone" id="uploadZone">
+        <div class="upload-zone-icon">📤</div>
+        <div class="upload-zone-title">파일을 여기에 끌어다 놓거나 클릭하여 선택</div>
+        <div class="upload-zone-sub">PDF · JPG · PNG 지원 (최대 30개)</div>
+        <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png" />
+      </div>
+
+      <div id="fileList" class="file-list"></div>
+
+      <div class="progress-wrap" id="progressWrap" style="display:none">
+        <div class="progress-track">
+          <div class="progress-bar" id="progressBar" style="width:0%"></div>
+        </div>
+        <div class="progress-text" id="progressText">준비 중…</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="evaluateBtn" disabled>🚀 평가 시작</button>
+        <button class="btn btn-outline" id="clearBtn">🗑️ 초기화</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 평가 결과 ── -->
+  <div class="card" id="resultsCard" style="display:none">
+    <div class="card-header">
+      <div class="card-icon">📊</div>
+      <div class="card-title">평가 결과</div>
+    </div>
+    <div class="card-body">
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('current')">이번 평가</button>
+        <button class="tab-btn" onclick="switchTab('saved')">저장된 결과</button>
+      </div>
+
+      <div id="tabCurrent">
+        <div class="btn-row" style="margin-top:0;margin-bottom:20px">
+          <button class="btn btn-teal btn-sm" onclick="downloadCSV()">💾 CSV 다운로드</button>
+          <button class="btn btn-primary btn-sm" onclick="saveAllToDb()">☁️ Supabase 저장</button>
+        </div>
+        <div id="resultsContainer"></div>
+      </div>
+
+      <div id="tabSaved" style="display:none">
+        <div class="btn-row" style="margin-top:0;margin-bottom:16px">
+          <button class="btn btn-outline btn-sm" onclick="loadSavedResults()">🔄 새로고침</button>
+        </div>
+        <div id="savedContainer">
+          <div class="empty-state">
+            <div class="empty-state-icon">🗄️</div>
+            <div class="empty-state-text">새로고침을 눌러 저장된 결과를 불러오세요</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+<div id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   SUPABASE
+══════════════════════════════════════════ */
+const SUPABASE_URL  = "https://pqjuvuflinnrpemqcafl.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxanV2dWZsaW5ucnBlbXFjYWZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NzAzMjQsImV4cCI6MjA5NDA0NjMyNH0.E4sJv1gM9TbWG-2o90aH8wJXZMLRY_uLQ9fgWARX1Ro";
+const SB_HEADS = {
+  "Content-Type": "application/json",
+  "apikey": SUPABASE_ANON,
+  "Authorization": "Bearer " + SUPABASE_ANON,
+  "Prefer": "return=representation"
+};
+async function sbGet(table, q) {
+  const r = await fetch(SUPABASE_URL + "/rest/v1/" + table + (q || ""), { headers: SB_HEADS });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbUpsert(table, body) {
+  const r = await fetch(SUPABASE_URL + "/rest/v1/" + table, {
+    method: "POST",
+    headers: { ...SB_HEADS, "Prefer": "resolution=merge-duplicates,return=representation" },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+/* ══════════════════════════════════════════
+   GEMINI KEY  (settings 테이블에서 자동 로드)
+══════════════════════════════════════════ */
+let GEMINI_API_KEY = "";
+async function loadApiKey() {
+  try {
+    const rows = await sbGet("settings", "?key=eq.gemini_api_key");
+    if (rows && rows.length > 0 && rows[0].value) {
+      GEMINI_API_KEY = rows[0].value;
+      updateDbStatus("ok");
+    }
+  } catch(e) {
+    console.warn("API 키 로드 실패:", e.message);
+    updateDbStatus("err");
+  }
+}
+
+/* ══════════════════════════════════════════
+   GEMINI API
+══════════════════════════════════════════ */
+const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+async function callGemini(imageBase64, mimeType, prompt) {
+  if (!GEMINI_API_KEY) throw new Error("Gemini API 키를 불러오지 못했습니다. Supabase settings 테이블을 확인하세요.");
+  const payload = {
+    contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType, data: imageBase64 } }] }],
+    generationConfig: { temperature: 0.3 }
+  };
+  let lastError;
+  for (const model of GEMINI_MODELS) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+    try {
+      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      if (res.status === 404) { lastError = "모델 없음"; continue; }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error?.message || res.statusText);
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error("응답 텍스트 없음");
+      return text;
+    } catch(e) {
+      lastError = e.message;
+      if (e.message.includes("API key")) throw e;
+    }
+  }
+  throw new Error("모든 Gemini 모델 시도 실패: " + lastError);
+}
+
+/* ══════════════════════════════════════════
+   RUBRIC  STATE
+══════════════════════════════════════════ */
+let rubricOn = false;
+// 기본 3단계
+let levels = [
+  { name: "상", desc: "" },
+  { name: "중", desc: "" },
+  { name: "하", desc: "" }
+];
+
+function renderLevels() {
+  const container = document.getElementById('levelsContainer');
+  container.innerHTML = '';
+  levels.forEach((lv, i) => {
+    const row = document.createElement('div');
+    row.className = 'level-row';
+    // 첫 행: 녹색, 마지막 행: 빨간색 테두리는 CSS nth로 처리
+    row.style.cssText = i === 0
+      ? 'border-color:#86EFAC;background:#F0FDF4;'
+      : i === levels.length - 1
+        ? 'border-color:#FCA5A5;background:#FFF1F2;'
+        : '';
+
+    row.innerHTML = `
+      <div class="level-name-wrap">
+        <label>단계 이름</label>
+        <input type="text" class="level-name-input" value="${escHtml(lv.name)}"
+          data-idx="${i}" onchange="updateLevelName(${i}, this.value)"
+          placeholder="예: 우수" />
+      </div>
+      <div class="level-desc-wrap">
+        <label>상세 평가 기준</label>
+        <textarea class="level-desc-input" rows="3" data-idx="${i}"
+          onchange="updateLevelDesc(${i}, this.value)"
+          placeholder="이 단계에 해당하는 구체적인 수행 특징을 입력하세요.">${escHtml(lv.desc)}</textarea>
+      </div>
+      <button class="level-delete-btn" onclick="deleteLevel(${i})"
+        ${levels.length <= 1 ? 'disabled' : ''} title="이 단계 삭제">✕</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function updateLevelName(i, val) { levels[i].name = val; }
+function updateLevelDesc(i, val) { levels[i].desc = val; }
+function addLevel() {
+  levels.push({ name: "단계" + (levels.length + 1), desc: "" });
+  renderLevels();
+}
+function deleteLevel(i) {
+  if (levels.length <= 1) return;
+  levels.splice(i, 1);
+  renderLevels();
+}
+
+function toggleRubric() {
+  rubricOn = !rubricOn;
+  document.getElementById('rubricToggle').classList.toggle('on', rubricOn);
+  document.getElementById('rubricToggleLabel').textContent = rubricOn ? '루브릭 사용 중' : '루브릭 사용 안 함';
+  document.getElementById('rubricPanel').classList.toggle('open', rubricOn);
+}
+
+/* ══════════════════════════════════════════
+   PROMPT BUILDER
+══════════════════════════════════════════ */
+function buildPrompt() {
+  const evalType    = document.querySelector('input[name="evalType"]:checked').value;
+  const achievement = document.getElementById('achievementInput').value.trim();
+  const extra       = document.getElementById('additionalInstr').value.trim();
+
+  let p = `당신은 IB PYP UOI(Unit of Inquiry) 수업을 담당하는 초등학교 교사입니다.\n`;
+  p += `학생이 손으로 작성한 답안 이미지를 보고 아래 기준에 따라 평가해주세요.\n\n`;
+
+  if (evalType === 'score') {
+    p += `【평가 방법】 0~100점 척도로 점수를 부여하세요.\n\n`;
+  } else {
+    p += `【평가 방법】 아래 평가 단계 중 해당하는 단계명으로 판정하세요.\n\n`;
+  }
+
+  if (rubricOn) {
+    if (achievement) {
+      p += `【성취 기준】\n${achievement}\n\n`;
+    }
+    if (levels.length > 0) {
+      p += `【평가 단계 및 기준】\n`;
+      levels.forEach(lv => {
+        p += `▸ ${lv.name}`;
+        if (lv.desc) p += `: ${lv.desc}`;
+        p += `\n`;
+      });
+      p += `\n`;
+    }
+  }
+
+  if (extra) p += `【추가 지침】\n${extra}\n\n`;
+
+  p += `【출력 형식】 반드시 다음 형식으로 작성하세요:\n\n`;
+  p += `1. 작성 내용 요약\n`;
+  if (evalType === 'score') {
+    p += `2. 평가 결과: [점수]/100점\n`;
+  } else {
+    const levelNames = rubricOn && levels.length > 0
+      ? levels.map(l => l.name).join(' / ')
+      : '상 / 중 / 하';
+    p += `2. 평가 결과: [${levelNames} 중 하나]\n`;
+  }
+  p += `3. 강점\n4. 개선이 필요한 부분\n5. 구체적 피드백\n\n`;
+  p += `손글씨가 흐리거나 알아보기 어려운 부분은 문맥으로 최대한 유추하여 평가하세요.`;
+  return p;
+}
+
+/* ══════════════════════════════════════════
+   FILE HANDLING
+══════════════════════════════════════════ */
+let uploadedFiles = [];
+let evaluationResults = [];
+
+function handleFiles(files) {
+  const arr = Array.from(files);
+  if (uploadedFiles.length + arr.length > 30) { toast("⚠️ 최대 30개까지 업로드 가능합니다"); return; }
+  arr.forEach(f => {
+    if (['application/pdf','image/jpeg','image/png'].includes(f.type)) uploadedFiles.push(f);
+    else toast(`⚠️ ${f.name} — 지원하지 않는 형식`);
+  });
+  renderFileList();
+}
+function renderFileList() {
+  document.getElementById('fileCountBadge').textContent = `파일 ${uploadedFiles.length}개`;
+  document.getElementById('evaluateBtn').disabled = uploadedFiles.length === 0;
+  document.getElementById('fileList').innerHTML = uploadedFiles.map((f, i) => `
+    <div class="file-item">
+      <div class="file-item-info">
+        <span>${f.type === 'application/pdf' ? '📄' : '🖼️'}</span>
+        <span>${escHtml(f.name)}</span>
+        <span class="file-item-size">${(f.size/1024).toFixed(1)} KB</span>
+      </div>
+      <button class="btn-remove" onclick="removeFile(${i})">삭제</button>
+    </div>`).join('');
+}
+function removeFile(i) { uploadedFiles.splice(i, 1); renderFileList(); }
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+/* ══════════════════════════════════════════
+   EVALUATE
+══════════════════════════════════════════ */
+async function startEvaluation() {
+  if (uploadedFiles.length === 0) return;
+  if (!GEMINI_API_KEY) { toast("⚠️ Gemini API 키를 불러오지 못했습니다"); return; }
+  const btn = document.getElementById('evaluateBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> 평가 중…';
+  setProgress(0, '파일 변환 중…'); showProgress(true);
+  evaluationResults = [];
+  const prompt = buildPrompt();
+  const total = uploadedFiles.length;
+  for (let i = 0; i < total; i++) {
+    const file = uploadedFiles[i];
+    setProgress(Math.round((i / total) * 90), `${i+1}/${total} 평가 중: ${file.name}`);
+    try {
+      const b64 = await fileToBase64(file);
+      const text = await callGemini(b64, file.type, prompt);
+      evaluationResults.push({ fileName: file.name, evaluation: text, success: true });
+    } catch(e) {
+      evaluationResults.push({ fileName: file.name, evaluation: '평가 실패: ' + e.message, success: false });
+    }
+    if (i < total - 1) await sleep(200);
+  }
+  setProgress(100, `✅ 평가 완료! (${total}개)`);
+  renderResults();
+  document.getElementById('resultsCard').style.display = 'block';
+  document.getElementById('resultsCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  btn.disabled = false;
+  btn.innerHTML = '🚀 평가 시작';
+}
+
+/* ══════════════════════════════════════════
+   RENDER RESULTS
+══════════════════════════════════════════ */
+function extractBadge(text) {
+  // 점수
+  const sm = text.match(/평가 결과:\s*(\d+)\/100점/);
+  if (sm) return `<span class="score-badge">${sm[1]}/100</span>`;
+  // 단계
+  const lm = text.match(/평가 결과:\s*\[?([^\]\n]+?)\]?\s*$/m);
+  if (lm) return `<span class="level-badge">${escHtml(lm[1].trim())}</span>`;
+  return '';
+}
+function renderResults() {
+  document.getElementById('resultsContainer').innerHTML = evaluationResults.map(r => `
+    <div class="result-item ${r.success ? '' : 'error-item'}">
+      <div class="result-header">
+        <div class="result-filename">${r.success ? '📝' : '❌'} ${escHtml(r.fileName)}</div>
+        ${r.success ? extractBadge(r.evaluation) : ''}
+      </div>
+      <div class="result-body">${escHtml(r.evaluation)}</div>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════
+   SUPABASE SAVE / LOAD
+══════════════════════════════════════════ */
+async function saveAllToDb() {
+  if (evaluationResults.length === 0) { toast("저장할 결과가 없습니다"); return; }
+  const classInfo = document.getElementById('classInfo').value.trim();
+  const evalType  = document.querySelector('input[name="evalType"]:checked').value;
+  const rows = evaluationResults.map(r => ({
+    id:         (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : uid()),
+    file_name:  r.fileName,
+    class_info: classInfo || null,
+    eval_type:  evalType,
+    evaluation: r.evaluation,
+    success:    r.success,
+    created_at: new Date().toISOString()
+  }));
+  try {
+    await sbUpsert("evaluations", rows);
+    toast("✅ Supabase에 저장되었습니다");
+    updateDbStatus("ok");
+  } catch(e) {
+    toast("❌ 저장 실패: " + e.message.slice(0, 60));
+    updateDbStatus("err");
+  }
+}
+async function loadSavedResults() {
+  const container = document.getElementById('savedContainer');
+  container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><div class="empty-state-text">불러오는 중…</div></div>';
+  try {
+    const rows = await sbGet("evaluations", "?order=created_at.desc&limit=100");
+    updateDbStatus("ok");
+    if (rows.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">저장된 결과가 없습니다</div></div>';
+      return;
+    }
+    container.innerHTML = `<div style="overflow-x:auto"><table class="results-table">
+      <thead><tr><th>파일명</th><th>반/학생</th><th>유형</th><th>결과 요약</th><th>저장 시각</th></tr></thead>
+      <tbody>${rows.map(r => `<tr>
+        <td>${escHtml(r.file_name)}</td>
+        <td>${escHtml(r.class_info || '—')}</td>
+        <td>${r.eval_type === 'score' ? '점수' : '수준'}</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml((r.evaluation || '').slice(0, 80))}…</td>
+        <td style="white-space:nowrap">${new Date(r.created_at).toLocaleString('ko-KR')}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  } catch(e) {
+    container.innerHTML = `<div class="alert alert-error">❌ 불러오기 실패: ${escHtml(e.message)}</div>`;
+    updateDbStatus("err");
+  }
+}
+
+/* ══════════════════════════════════════════
+   CSV DOWNLOAD
+══════════════════════════════════════════ */
+function downloadCSV() {
+  if (evaluationResults.length === 0) { toast("결과가 없습니다"); return; }
+  const classInfo = document.getElementById('classInfo').value.trim();
+  let csv = '\uFEFF파일명,반/학생,평가내용,성공여부\n';
+  evaluationResults.forEach(r => {
+    const ev = r.evaluation.replace(/"/g, '""').replace(/\n/g, ' ');
+    csv += `"${r.fileName}","${classInfo}","${ev}","${r.success ? '성공' : '실패'}"\n`;
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+  a.download = 'IB_UOI_평가결과_' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+}
+
+/* ══════════════════════════════════════════
+   UI HELPERS
+══════════════════════════════════════════ */
+function switchTab(tab) {
+  document.getElementById('tabCurrent').style.display = tab === 'current' ? 'block' : 'none';
+  document.getElementById('tabSaved').style.display   = tab === 'saved'   ? 'block' : 'none';
+  document.querySelectorAll('.tab-btn').forEach((b, i) =>
+    b.classList.toggle('active', (i === 0 && tab === 'current') || (i === 1 && tab === 'saved')));
+  if (tab === 'saved') loadSavedResults();
+}
+function setProgress(pct, msg) {
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = msg;
+}
+function showProgress(show) { document.getElementById('progressWrap').style.display = show ? 'block' : 'none'; }
+function updateDbStatus(state) {
+  const dot = document.getElementById('dbDot'), text = document.getElementById('dbStatusText');
+  if (state === 'ok')  { dot.className = 'dot ok';  text.textContent = 'DB 연결됨'; }
+  else if (state === 'err') { dot.className = 'dot err'; text.textContent = 'DB 오류'; }
+  else { dot.className = 'dot'; text.textContent = '연결 중…'; }
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function toast(msg, d = 3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), d);
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function uid() { return Math.random().toString(36).slice(2, 10).toUpperCase(); }
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', async () => {
+  renderLevels();
+  await loadApiKey();
+
+  document.getElementById('rubricToggleRow').addEventListener('click', toggleRubric);
+
+  const zone  = document.getElementById('uploadZone');
+  const input = document.getElementById('fileInput');
+  zone.addEventListener('click', () => input.click());
+  zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+  input.addEventListener('change', e => handleFiles(e.target.files));
+
+  document.getElementById('evaluateBtn').addEventListener('click', startEvaluation);
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    uploadedFiles = []; evaluationResults = [];
+    renderFileList();
+    document.getElementById('resultsCard').style.display = 'none';
+    showProgress(false);
+    document.getElementById('fileInput').value = '';
+  });
+});
+</script>
+</body>
+</html>
